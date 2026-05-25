@@ -66,6 +66,23 @@ public class BlogService {
 
     }
 
+    public List<BlogPost> searchWild(String query){
+        if (query == null || query.isBlank()){
+            return List.of();
+        }
+
+        String toLowerQuery = query.toLowerCase();
+
+        return repository.findAll().stream()
+                .filter(post ->
+                    post.getTitle() != null && post.getTitle().toLowerCase().contains(toLowerQuery)
+                            || post.getContent() != null && post.getContent().toLowerCase().contains(toLowerQuery)
+                            || post.getCategory().name() != null && post.getCategory().name().toLowerCase().contains(toLowerQuery)
+                )
+                .toList();
+
+    }
+
 
     private List<Tag> getTags(List<String> tag){
         return tag.stream()
