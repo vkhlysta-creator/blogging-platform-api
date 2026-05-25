@@ -83,6 +83,10 @@ public class BlogService {
 
     }
 
+    public List<BlogPost> getAllPosts(){
+        return repository.findAll();
+    }
+
 
     private List<Tag> getTags(List<String> tag){
         return tag.stream()

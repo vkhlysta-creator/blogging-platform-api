@@ -2,5 +2,5 @@ package de.volodymyr.learning.model;
 
 import java.util.List;
 
-public record UpdatedPost(int id, String title, String content, String category, List<String> tags) {
+public record UpdatedPost( String title, String content, String category, List<String> tags) {
 }
