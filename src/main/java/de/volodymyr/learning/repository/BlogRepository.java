@@ -9,7 +9,7 @@ import java.util.List;
 public interface BlogRepository {
     void save(BlogPost post);
 
-    void delete(int id);
+    BlogPost delete(int id);
 
     List<BlogPost> findAll();
 

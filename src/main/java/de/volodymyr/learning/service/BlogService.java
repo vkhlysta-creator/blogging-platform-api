@@ -1,16 +1,11 @@
 package de.volodymyr.learning.service;
 
-import de.volodymyr.learning.model.BlogPost;
-import de.volodymyr.learning.model.Category;
-import de.volodymyr.learning.model.CreatedPost;
-import de.volodymyr.learning.model.Tag;
+import de.volodymyr.learning.model.*;
 import de.volodymyr.learning.repository.BlogRepository;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 public class BlogService {
     private final BlogRepository repository;
@@ -41,6 +36,34 @@ public class BlogService {
         }
 
         return result;
+    }
+
+    public void deletePost(int id){
+        BlogPost deletedPost = repository.delete(id);
+
+        if (deletedPost == null){
+            throw new NoSuchElementException("Deleted Post doesn't exist");
+        }
+
+    }
+
+    public BlogPost updatePost(int id, UpdatedPost dto) throws  IllegalArgumentException, NoSuchElementException{
+        if (dto.title() == null || dto.title().isBlank())
+            throw new IllegalArgumentException("Tittle is empty");
+
+
+        BlogPost toUpdatePost = new BlogPost(findById(id));
+
+        toUpdatePost.setTitle(dto.title());
+        toUpdatePost.setContent(dto.content());
+        toUpdatePost.setUpdatedAt(LocalDateTime.now());
+        toUpdatePost.setTags(getTags(dto.tags()));
+        toUpdatePost.setCategory(new Category(0, dto.category()));
+
+        repository.save(toUpdatePost);
+
+        return toUpdatePost;
+
     }
 
 

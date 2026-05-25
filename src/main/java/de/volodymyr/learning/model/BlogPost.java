@@ -1,6 +1,7 @@
 package de.volodymyr.learning.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BlogPost {
@@ -16,8 +17,18 @@ public class BlogPost {
         this.id = id;
         this.title = title;
         this.content = content;
-        this.category = category;
+        this.category = new Category(category.id(), category.name());
         this.tags = tags;
+    }
+
+    public BlogPost(BlogPost post){
+        this.id = post.getId();
+        this.title = post.getTitle();
+        this.content = post.getContent();
+        this.category = post.getCategory();
+        this.tags = new ArrayList<>(post.getTags());
+        this.createdAt = post.createdAt;
+        this.updatedAt = post.updatedAt;
     }
 
     public int getId() {

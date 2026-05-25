@@ -1,9 +1,6 @@
 package de.volodymyr.learning.repository;
 
 import de.volodymyr.learning.model.BlogPost;
-import de.volodymyr.learning.model.Category;
-import de.volodymyr.learning.model.CreatedPost;
-import de.volodymyr.learning.model.Tag;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,8 +28,8 @@ public class InMemoryBlogRepository implements BlogRepository{
     }
 
     @Override
-    public void delete(int id) {
-        posts.remove(id);
+    public BlogPost delete(int id) {
+        return posts.remove(id);
     }
 
     @Override
