@@ -83,4 +83,78 @@ public class PostgresSQLRepository implements BlogRepository{
 
         return foundPost;
     }
+
+
+    private long getOrCreateCategory(String name){
+        String querySelect = """
+                SELECT id
+                FROM categories
+                WHERE name = ?;
+                """;
+        String queryInsert = """
+                INSERT INTO categories (name)
+                VALUES (?)
+                """;
+        try (PreparedStatement statementSelect = connection.prepareStatement(querySelect)){
+           statementSelect.setString(1, name);
+
+           try(ResultSet selectRS = statementSelect.executeQuery()){
+               if (selectRS.next()){
+                   return selectRS.getLong("id");
+               }
+           }
+
+           try (PreparedStatement statementInsert = connection.prepareStatement(queryInsert, Statement.RETURN_GENERATED_KEYS)){
+               statementInsert.setString(1, name);
+               statementInsert.executeUpdate();
+
+               try (ResultSet generatedID = statementInsert.getGeneratedKeys() ){
+                    if (generatedID.next()){
+                        return generatedID.getLong(1);
+                    }
+               }
+           }
+
+        }catch (SQLException sqle){
+            System.out.println("Exception(Creating Category) : "  + sqle.getMessage());
+        }
+        return -1;
+    }
+
+
+    private long getOrCreateTag(String name){
+        String querySelect = """
+                SELECT id
+                FROM tags
+                WHERE name = ?;
+                """;
+        String queryInsert = """
+                INSERT INTO tags (name)
+                VALUES (?)
+                """;
+
+        try (PreparedStatement statementSelect = connection.prepareStatement(querySelect)){
+            statementSelect.setString(1, name);
+            try (ResultSet resultSelect = statementSelect.executeQuery()){
+                if (resultSelect.next()){
+                    return resultSelect.getLong("id");
+                }
+            }
+
+            try (PreparedStatement statementInsert = connection.prepareStatement(queryInsert, Statement.RETURN_GENERATED_KEYS)){
+                statementInsert.setString(1, name);
+                statementInsert.executeUpdate();
+
+                try (ResultSet generatedID = statementInsert.getGeneratedKeys()){
+                    if (generatedID.next()){
+                        return generatedID.getLong(1);
+                    }
+                }
+            }
+
+        }catch (SQLException sqle){
+            System.out.println("Problem with creation of the tag: " + sqle.getMessage());
+        }
+        return -1;
+    }
 }
