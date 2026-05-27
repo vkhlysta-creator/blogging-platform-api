@@ -157,4 +157,46 @@ public class PostgresSQLRepository implements BlogRepository{
         }
         return -1;
     }
+
+    private void insertPost(BlogPost post){
+        String insertQueryCategories = """
+                INSERT INTO posts (title, content, created_at, updated_at, category_id)
+                VALUES (?, ?, ?, ?, ?);
+                """;
+        String insertQueryTags = """
+                INSERT INTO post_tags (post_id, tag_id)
+                VALUES (?, ?);
+                """;
+        long categoryID = getOrCreateCategory(post.getCategory().name());
+
+        try (PreparedStatement categoryInsertion = connection.prepareStatement(insertQueryCategories, Statement.RETURN_GENERATED_KEYS)){
+            categoryInsertion.setString(1, post.getTitle());
+            categoryInsertion.setString(2, post.getContent());
+            categoryInsertion.setTimestamp(3, Timestamp.valueOf(post.getCreatedAt()));
+            categoryInsertion.setTimestamp(4, Timestamp.valueOf(post.getUpdatedAt()));
+            categoryInsertion.setLong(5, categoryID);
+
+            categoryInsertion.executeUpdate();
+
+            try(ResultSet resultInsertionCategory = categoryInsertion.getGeneratedKeys()){
+                if (resultInsertionCategory.next()){
+                    long post_id = resultInsertionCategory.getLong(1);
+                    try (PreparedStatement tagsInsertion = connection.prepareStatement(insertQueryTags)){
+                        for (Tag tag : post.getTags()){
+                            long tag_id = getOrCreateTag(tag.name());
+                            tagsInsertion.setLong(1, post_id);
+                            tagsInsertion.setLong(2, tag_id);
+                            tagsInsertion.addBatch();
+                        }
+                        tagsInsertion.executeBatch();
+                    }
+                }else
+                    throw new SQLException("Creating post failed, no ID obtained.");
+            }
+        }catch (SQLException sqle){
+            System.out.println("Problem with insertion: " + sqle.getMessage());
+            sqle.printStackTrace();
+        }
+
+    }
 }
