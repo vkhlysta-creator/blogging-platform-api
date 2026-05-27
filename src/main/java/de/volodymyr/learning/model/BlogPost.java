@@ -13,6 +13,16 @@ public class BlogPost {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    public BlogPost(int id, String title, String content, Category category, List<Tag> tags, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.title = title;
+        this.content = content;
+        this.category = new Category(category.id(), category.name());
+        this.tags = tags;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     public BlogPost(int id, String title, String content, Category category, List<Tag> tags) {
         this.id = id;
         this.title = title;
