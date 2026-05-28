@@ -5,8 +5,7 @@ import de.volodymyr.learning.model.Category;
 import de.volodymyr.learning.model.Tag;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class PostgresSQLRepository implements BlogRepository {
 
@@ -27,11 +26,18 @@ public class PostgresSQLRepository implements BlogRepository {
 
     @Override
     public BlogPost delete(int id) {
+
+        BlogPost postToDelete = find(id);
+
+        if (postToDelete == null)
+            return null;
+
         String deleteQuery = """
                 DELETE
                 FROM posts
                 WHERE id = ?;
                 """;
+
         try (PreparedStatement statementDelete = connection.prepareStatement(deleteQuery)){
             statementDelete.setLong(1, id);
             statementDelete.executeUpdate();
@@ -39,12 +45,70 @@ public class PostgresSQLRepository implements BlogRepository {
             System.out.println("Delete-Process was unsuccessful: " + e.getMessage());
             e.printStackTrace();
         }
-        return null;
+        return postToDelete;
     }
 
     @Override
     public List<BlogPost> findAll() {
-        return List.of();
+        String sqlQuery = """
+                SELECT\s
+                    p.id AS post_id,\s
+                    p.title AS post_title,\s
+                    p.content AS post_content,\s
+                    p.created_at AS post_created_at,\s
+                    p.updated_at AS post_updated_at,
+                    c.id AS category_id,\s
+                    c.name AS category_name,
+                    t.id AS tag_id,\s
+                    t.name AS tag_name
+                FROM posts p
+                INNER JOIN categories c ON p.category_id = c.id
+                LEFT JOIN post_tags pt ON p.id = pt.post_id
+                LEFT JOIN tags t ON pt.tag_id = t.id;
+                """;
+        Map<Long, BlogPost> postMap = new LinkedHashMap<>();
+
+        try (PreparedStatement allPostsStatement = connection.prepareStatement(sqlQuery)){
+
+
+            try (ResultSet allPosts = allPostsStatement.executeQuery()){
+                while (allPosts.next()){
+                    long postID = allPosts.getLong("post_id");
+
+                    BlogPost currentPost = postMap.get(postID);
+
+                    if (currentPost == null){
+                        Timestamp createdAt = allPosts.getTimestamp("post_created_at");
+                        Timestamp updatedAt = allPosts.getTimestamp("post_updated_at");
+                        Category postCategory = new Category(allPosts.getInt("category_id"), allPosts.getString("category_name"));
+
+                        currentPost = new BlogPost(
+                                allPosts.getInt("post_id"),
+                                allPosts.getString("post_title"),
+                                allPosts.getString("post_content"),
+                                postCategory,
+                                new ArrayList<>(),
+                                createdAt != null ? createdAt.toLocalDateTime() : null,
+                                updatedAt != null ? updatedAt.toLocalDateTime() : null
+                                );
+
+                        postMap.put(postID, currentPost);
+                    }
+                    int tagID = allPosts.getInt("tag_id");
+                    if (tagID != 0) {
+                        Tag foundTag = new Tag(tagID, allPosts.getString("tag_name"));
+                        currentPost.getTags().add(foundTag);
+                    }
+
+                }
+
+            }
+        }catch (SQLException e){
+            System.out.println("FindAll problem: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return new ArrayList<>(postMap.values());
     }
 
     @Override
@@ -69,7 +133,7 @@ public class PostgresSQLRepository implements BlogRepository {
                 WHERE p.id = ?;""";
         try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
             statement.setInt(1, id);
-            ResultSet rs = statement.executeQuery();
+            ResultSet rs = statement.executeQuery();   // ResultSet not in a try-with-resources block
             while (rs.next()) {
                 if (foundPost == null) {
                     Timestamp createdAt = rs.getTimestamp("post_created_at");
