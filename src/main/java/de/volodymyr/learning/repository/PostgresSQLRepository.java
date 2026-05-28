@@ -27,6 +27,18 @@ public class PostgresSQLRepository implements BlogRepository {
 
     @Override
     public BlogPost delete(int id) {
+        String deleteQuery = """
+                DELETE
+                FROM posts
+                WHERE id = ?;
+                """;
+        try (PreparedStatement statementDelete = connection.prepareStatement(deleteQuery)){
+            statementDelete.setLong(1, id);
+            statementDelete.executeUpdate();
+        }catch (SQLException e){
+            System.out.println("Delete-Process was unsuccessful: " + e.getMessage());
+            e.printStackTrace();
+        }
         return null;
     }
 
