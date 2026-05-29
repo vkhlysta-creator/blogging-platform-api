@@ -23,9 +23,11 @@ public class BlogService {
                 dto.title(),
                 dto.content(),
                 new Category(0, dto.category()),
-                getTags(dto.tags()));
+                getTags(dto.tags()),
+                LocalDateTime.now(),
+                LocalDateTime.now()) ;
         repository.save(newPost);
-        return newPost;
+        return findById(newPost.getId());
     }
 
     public BlogPost findById(int id) throws NoSuchElementException{
@@ -52,7 +54,7 @@ public class BlogService {
             throw new IllegalArgumentException("Tittle is empty");
 
 
-        BlogPost toUpdatePost = new BlogPost(findById(id));
+        BlogPost toUpdatePost = findById(id);
 
         toUpdatePost.setTitle(dto.title());
         toUpdatePost.setContent(dto.content());
@@ -61,6 +63,7 @@ public class BlogService {
         toUpdatePost.setCategory(new Category(0, dto.category()));
 
         repository.save(toUpdatePost);
+        toUpdatePost = repository.find(id);
 
         return toUpdatePost;
 

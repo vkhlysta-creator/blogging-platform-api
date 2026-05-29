@@ -261,6 +261,8 @@ public class PostgresSQLRepository implements BlogRepository {
             try (ResultSet resultInsertionCategory = categoryInsertion.getGeneratedKeys()) {
                 if (resultInsertionCategory.next()) {
                     long post_id = resultInsertionCategory.getLong(1);
+
+                    post.setId((int) post_id);
                     try (PreparedStatement tagsInsertion = connection.prepareStatement(insertQueryTags)) {
                         for (Tag tag : post.getTags()) {
                             long tag_id = getOrCreateTag(tag.name());
