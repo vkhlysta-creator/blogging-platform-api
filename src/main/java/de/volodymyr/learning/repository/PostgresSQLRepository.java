@@ -295,7 +295,7 @@ public class PostgresSQLRepository implements BlogRepository {
                 INSERT INTO post_tags (post_id, tag_id)
                 VALUES (?, ?);
                 """;
-
+        long categoryID = getOrCreateCategory(post.getCategory().name());
 
         try {
             connection.setAutoCommit(false);
@@ -307,7 +307,7 @@ public class PostgresSQLRepository implements BlogRepository {
                 statementUpdate.setString(1, post.getTitle());
                 statementUpdate.setString(2, post.getContent());
                 statementUpdate.setTimestamp(3, Timestamp.valueOf(post.getUpdatedAt()));
-                statementUpdate.setInt(4, post.getCategory().id());
+                statementUpdate.setLong(4, categoryID);
                 statementUpdate.setInt(5, post.getId());
                 statementUpdate.executeUpdate();
 
