@@ -75,16 +75,7 @@ public class BlogService {
         if (query == null || query.isBlank()){
             return List.of();
         }
-
-        String toLowerQuery = query.toLowerCase();
-
-        return repository.findAll().stream()
-                .filter(post ->
-                    post.getTitle() != null && post.getTitle().toLowerCase().contains(toLowerQuery)
-                            || post.getContent() != null && post.getContent().toLowerCase().contains(toLowerQuery)
-                            || post.getCategory().name() != null && post.getCategory().name().toLowerCase().contains(toLowerQuery)
-                )
-                .toList();
+        return repository.wildSearch(query);
 
     }
 

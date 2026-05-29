@@ -1,7 +1,6 @@
 package de.volodymyr.learning.model;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 public class BlogPost {
@@ -10,7 +9,7 @@ public class BlogPost {
     private String content;
     private Category category;
     private List<Tag> tags;
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public BlogPost(int id, String title, String content, Category category, List<Tag> tags, LocalDateTime createdAt, LocalDateTime updatedAt) {
@@ -23,23 +22,6 @@ public class BlogPost {
         this.updatedAt = updatedAt;
     }
 
-    public BlogPost(int id, String title, String content, Category category, List<Tag> tags) {
-        this.id = id;
-        this.title = title;
-        this.content = content;
-        this.category = new Category(category.id(), category.name());
-        this.tags = tags;
-    }
-
-    public BlogPost(BlogPost post){
-        this.id = post.getId();
-        this.title = post.getTitle();
-        this.content = post.getContent();
-        this.category = post.getCategory();
-        this.tags = new ArrayList<>(post.getTags());
-        this.createdAt = post.createdAt;
-        this.updatedAt = post.updatedAt;
-    }
 
     public int getId() {
         return id;
@@ -77,9 +59,6 @@ public class BlogPost {
         this.content = content;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 
     public void setId(int id) {
         this.id = id;

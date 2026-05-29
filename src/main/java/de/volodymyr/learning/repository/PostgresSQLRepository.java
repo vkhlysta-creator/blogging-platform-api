@@ -16,7 +16,7 @@ public class PostgresSQLRepository implements BlogRepository {
     }
 
     @Override
-    public void save(BlogPost post) throws IllegalArgumentException{
+    public void save(BlogPost post) throws IllegalArgumentException {
         if (post == null)
             throw new IllegalArgumentException("Post can't be added[null BlogPost]");
         if (post.getId() == 0)
@@ -38,10 +38,10 @@ public class PostgresSQLRepository implements BlogRepository {
                 WHERE id = ?;
                 """;
 
-        try (PreparedStatement statementDelete = connection.prepareStatement(deleteQuery)){
+        try (PreparedStatement statementDelete = connection.prepareStatement(deleteQuery)) {
             statementDelete.setLong(1, id);
             statementDelete.executeUpdate();
-        }catch (SQLException e){
+        } catch (SQLException e) {
             System.out.println("Delete-Process was unsuccessful: " + e.getMessage());
             e.printStackTrace();
         }
@@ -68,42 +68,42 @@ public class PostgresSQLRepository implements BlogRepository {
                 """;
         Map<Long, BlogPost> postMap = new LinkedHashMap<>();
 
-        try (PreparedStatement allPostsStatement = connection.prepareStatement(sqlQuery)){
+        try (PreparedStatement allPostsStatement = connection.prepareStatement(sqlQuery)) {
 
 
-            try (ResultSet allPosts = allPostsStatement.executeQuery()){
-                while (allPosts.next()){
-                    long postID = allPosts.getLong("post_id");
+            try (ResultSet rs = allPostsStatement.executeQuery()) {
+                while (rs.next()) {
+                    long postID = rs.getLong("post_id");
 
                     BlogPost currentPost = postMap.get(postID);
 
-                    if (currentPost == null){
-                        Timestamp createdAt = allPosts.getTimestamp("post_created_at");
-                        Timestamp updatedAt = allPosts.getTimestamp("post_updated_at");
-                        Category postCategory = new Category(allPosts.getInt("category_id"), allPosts.getString("category_name"));
+                    if (currentPost == null) {
+                        Timestamp createdAt = rs.getTimestamp("post_created_at");
+                        Timestamp updatedAt = rs.getTimestamp("post_updated_at");
+                        Category postCategory = new Category(rs.getInt("category_id"), rs.getString("category_name"));
 
                         currentPost = new BlogPost(
-                                allPosts.getInt("post_id"),
-                                allPosts.getString("post_title"),
-                                allPosts.getString("post_content"),
+                                rs.getInt("post_id"),
+                                rs.getString("post_title"),
+                                rs.getString("post_content"),
                                 postCategory,
                                 new ArrayList<>(),
                                 createdAt != null ? createdAt.toLocalDateTime() : null,
                                 updatedAt != null ? updatedAt.toLocalDateTime() : null
-                                );
+                        );
 
                         postMap.put(postID, currentPost);
                     }
-                    int tagID = allPosts.getInt("tag_id");
+                    int tagID = rs.getInt("tag_id");
                     if (tagID != 0) {
-                        Tag foundTag = new Tag(tagID, allPosts.getString("tag_name"));
+                        Tag foundTag = new Tag(tagID, rs.getString("tag_name"));
                         currentPost.getTags().add(foundTag);
                     }
 
                 }
 
             }
-        }catch (SQLException e){
+        } catch (SQLException e) {
             System.out.println("FindAll problem: " + e.getMessage());
             e.printStackTrace();
         }
@@ -133,28 +133,29 @@ public class PostgresSQLRepository implements BlogRepository {
                 WHERE p.id = ?;""";
         try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
             statement.setInt(1, id);
-            ResultSet rs = statement.executeQuery();   // ResultSet not in a try-with-resources block
-            while (rs.next()) {
-                if (foundPost == null) {
-                    Timestamp createdAt = rs.getTimestamp("post_created_at");
-                    Timestamp updatedAt = rs.getTimestamp("post_updated_at");
-                    Category postCategory = new Category(rs.getInt("category_id"), rs.getString("category_name"));
-                    foundPost = new BlogPost(
-                            rs.getInt("post_id"),
-                            rs.getString("post_title"),
-                            rs.getString("post_content"),
-                            postCategory,
-                            foundTags,
-                            createdAt.toLocalDateTime(),
-                            updatedAt.toLocalDateTime()
-                    );
-                }
-                int tagID = rs.getInt("tag_id");
-                if (tagID != 0) {
-                    Tag foundTag = new Tag(tagID, rs.getString("tag_name"));
-                    foundTags.add(foundTag);
-                }
+            try (ResultSet rs = statement.executeQuery()) {   // ResultSet not in a try-with-resources block
+                while (rs.next()) {
+                    if (foundPost == null) {
+                        Timestamp createdAt = rs.getTimestamp("post_created_at");
+                        Timestamp updatedAt = rs.getTimestamp("post_updated_at");
+                        Category postCategory = new Category(rs.getInt("category_id"), rs.getString("category_name"));
+                        foundPost = new BlogPost(
+                                rs.getInt("post_id"),
+                                rs.getString("post_title"),
+                                rs.getString("post_content"),
+                                postCategory,
+                                foundTags,
+                                createdAt.toLocalDateTime(),
+                                updatedAt.toLocalDateTime()
+                        );
+                    }
+                    int tagID = rs.getInt("tag_id");
+                    if (tagID != 0) {
+                        Tag foundTag = new Tag(tagID, rs.getString("tag_name"));
+                        foundTags.add(foundTag);
+                    }
 
+                }
             }
         } catch (SQLException sqle) {
             System.out.println("Problem with prepared statement: " + sqle.getMessage());
@@ -162,6 +163,70 @@ public class PostgresSQLRepository implements BlogRepository {
 
 
         return foundPost;
+    }
+
+    @Override
+    public List<BlogPost> wildSearch(String query) {
+        Map<Long, BlogPost> foundPosts = new LinkedHashMap<>();
+        String sqlQuery = """
+                SELECT
+                    p.id AS post_id,
+                    p.title AS post_title,
+                    p.content AS post_content,
+                    p.created_at AS post_created_at,
+                    p.updated_at AS post_updated_at,
+                    c.id AS category_id,
+                    c.name AS category_name,
+                    t.id AS tag_id,
+                    t.name AS tag_name
+                FROM posts p
+                INNER JOIN categories c ON p.category_id = c.id
+                LEFT JOIN post_tags pt ON p.id = pt.post_id
+                LEFT JOIN tags t ON pt.tag_id = t.id
+                WHERE p.title ILIKE ? OR p.content ILIKE ? OR c.name ILIKE ?
+                """;
+        try (PreparedStatement searchWild = connection.prepareStatement(sqlQuery)) {
+            String wrappedQuery = "%" + query + "%";
+            searchWild.setString(1, wrappedQuery);
+            searchWild.setString(2, wrappedQuery);
+            searchWild.setString(3, wrappedQuery);
+            try (ResultSet rs = searchWild.executeQuery()) {
+                while (rs.next()) {
+                    long postID = rs.getLong("post_id");
+
+                    BlogPost currentPost = foundPosts.get(postID);
+                    if (currentPost == null) {
+                        Timestamp createdAt = rs.getTimestamp("post_created_at");
+                        Timestamp updatedAt = rs.getTimestamp("post_updated_at");
+                        Category postCategory = new Category(rs.getInt("category_id"), rs.getString("category_name"));
+
+                        currentPost = new BlogPost(
+                                rs.getInt("post_id"),
+                                rs.getString("post_title"),
+                                rs.getString("post_content"),
+                                postCategory,
+                                new ArrayList<>(),
+                                createdAt != null ? createdAt.toLocalDateTime() : null,
+                                updatedAt != null ? updatedAt.toLocalDateTime() : null
+                        );
+
+                        foundPosts.put(postID, currentPost);
+
+                    }
+                    int tagID = rs.getInt("tag_id");
+                    if (tagID != 0) {
+                        Tag foundTag = new Tag(tagID, rs.getString("tag_name"));
+                        currentPost.getTags().add(foundTag);
+                    }
+
+                }
+            }
+
+        } catch (SQLException sqle) {
+            System.out.println("Wild Search Problem: " + sqle.getMessage());
+            sqle.printStackTrace();
+        }
+        return new ArrayList<>(foundPosts.values());
     }
 
 

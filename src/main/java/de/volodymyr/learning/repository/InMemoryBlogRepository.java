@@ -41,4 +41,8 @@ public class InMemoryBlogRepository implements BlogRepository{
     public BlogPost find(int id) {
         return posts.get(id);
     }
+    @Override
+    public List<BlogPost> wildSearch(String query){ // Not implemented yet!!!
+        return List.of();
+    }
 }

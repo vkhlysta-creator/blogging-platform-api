@@ -14,4 +14,6 @@ public interface BlogRepository {
     List<BlogPost> findAll();
 
     BlogPost find(int id);
+
+    List<BlogPost> wildSearch(String query);
 }
