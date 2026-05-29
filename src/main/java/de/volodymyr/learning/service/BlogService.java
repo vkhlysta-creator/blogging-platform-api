@@ -40,12 +40,14 @@ public class BlogService {
         return result;
     }
 
-    public void deletePost(int id){
+    public BlogPost deletePost(int id){
         BlogPost deletedPost = repository.delete(id);
 
         if (deletedPost == null){
             throw new NoSuchElementException("Deleted Post doesn't exist");
         }
+
+        return deletedPost;
 
     }
 
