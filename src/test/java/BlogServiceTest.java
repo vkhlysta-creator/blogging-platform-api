@@ -230,8 +230,7 @@ class BlogServiceTest {
 
     @Test
     void testWildSearch_Exception(){
-        String query = null;
-        List<BlogPost> found = blogService.searchWild(query);
+        List<BlogPost> found = blogService.searchWild(null);
         Assertions.assertEquals(0, found.size());
     }
 
