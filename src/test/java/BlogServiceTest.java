@@ -189,5 +189,51 @@ class BlogServiceTest {
         Assertions.assertThrows(NoSuchElementException.class, () -> blogService.deletePost(1));
     }
 
+    @Test
+    void testFindAll_Success(){
+        BlogPost firstPost = new BlogPost(
+                1,
+                "Creativity",
+                "That's the most important thing in our world!...",
+                new Category(1, "Creativity"),
+                List.of(new Tag(1, "Power"), new Tag(2, "Brain")),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        BlogPost secondPost = new BlogPost(
+                2,
+                "IT SOLUTIONS ",
+                "MAKE CODING GREAT AGAIN!...",
+                new Category(1, "IT"),
+                List.of(new Tag(3, "IT"), new Tag(4, "Java")),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        BlogPost thirdPost = new BlogPost(
+                3,
+                "All what matters",
+                "If somebody thinks...",
+                new Category(1, "Philosophy"),
+                List.of(new Tag(1, "Brain"), new Tag(5, "Thoughts")),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+
+        Mockito.when(blogRepository.findAll()).thenReturn(List.of(firstPost, secondPost, thirdPost));
+
+        List<BlogPost> found = blogService.getAllPosts();
+
+        Assertions.assertEquals(1, found.getFirst().getId());
+        Assertions.assertEquals(3, found.size());
+        Assertions.assertEquals("If somebody thinks...", found.getLast().getContent());
+    }
+
+    @Test
+    void testWildSearch_Exception(){
+        String query = null;
+        List<BlogPost> found = blogService.searchWild(query);
+        Assertions.assertEquals(0, found.size());
+    }
+
 
 }
