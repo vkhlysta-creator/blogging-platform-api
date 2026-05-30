@@ -86,4 +86,29 @@ class BlogServiceTest {
         Assertions.assertEquals(0, capturedPost.getId()); // ID при создании должен быть 0!
         Assertions.assertEquals(1, result.getId());
     }
+
+    @Test
+    void savePost_InvalidTitle_ThrowsException(){
+        CreatedPost toCreatePostNoTitle = new CreatedPost(
+                "",
+                "That's the most important thing in our world!...",
+                "Creativity",
+                List.of("Power", "Brain")
+        );
+        CreatedPost toCreatePostNull = new CreatedPost(
+                null,
+                "That's the most important thing in our world!...",
+                "Creativity",
+                List.of("Power", "Brain")
+        );
+
+        Assertions.assertThrows(IllegalArgumentException.class, () -> blogService.create(toCreatePostNoTitle));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> blogService.create(toCreatePostNull));
+        Mockito.verifyNoInteractions(blogRepository);
+    }
+
+    @Test
+    void testUpdate_Success(){
+
+    }
 }
