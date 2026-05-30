@@ -40,7 +40,7 @@ public class BlogService {
         return result;
     }
 
-    public BlogPost deletePost(int id){
+    public BlogPost deletePost(int id) throws  NoSuchElementException{
         BlogPost deletedPost = repository.delete(id);
 
         if (deletedPost == null){

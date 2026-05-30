@@ -4,7 +4,6 @@ import de.volodymyr.learning.service.BlogService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.function.Executable;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -12,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import static org.mockito.ArgumentMatchers.anyInt;
 
 
 
@@ -138,15 +136,6 @@ class BlogServiceTest {
 
     @Test
     void testUpdate_NoTitle(){
-        BlogPost oldPost = new BlogPost(
-                1,
-                "Creativity",
-                "That's the most important thing in our world!...",
-                new Category(1, "Creativity"),
-                List.of(new Tag(1, "Power"), new Tag(2, "Brain")),
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
         UpdatedPost toUpdatePost = new UpdatedPost(
                 "",
                 "I sad NO!",
@@ -175,4 +164,30 @@ class BlogServiceTest {
 
         Assertions.assertThrows(NoSuchElementException.class, () -> blogService.updatePost(1, toUpdatePost));
     }
+
+    @Test
+    void testDelete_Success(){
+        BlogPost oldPost = new BlogPost(
+                1,
+                "Creativity",
+                "That's the most important thing in our world!...",
+                new Category(1, "Creativity"),
+                List.of(new Tag(1, "Power"), new Tag(2, "Brain")),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        Mockito.when(blogRepository.delete(1)).thenReturn(oldPost);
+
+        blogService.deletePost(1);
+        Mockito.verify(blogRepository).delete(1);
+    }
+
+    @Test
+    void testDelete_ThrowsException(){
+        Mockito.when(blogRepository.delete(1)).thenReturn(null);
+
+        Assertions.assertThrows(NoSuchElementException.class, () -> blogService.deletePost(1));
+    }
+
+
 }
