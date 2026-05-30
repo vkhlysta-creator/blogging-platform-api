@@ -1,7 +1,4 @@
-import de.volodymyr.learning.model.BlogPost;
-import de.volodymyr.learning.model.Category;
-import de.volodymyr.learning.model.CreatedPost;
-import de.volodymyr.learning.model.Tag;
+import de.volodymyr.learning.model.*;
 import de.volodymyr.learning.repository.BlogRepository;
 import de.volodymyr.learning.service.BlogService;
 import org.junit.jupiter.api.Assertions;
@@ -109,6 +106,73 @@ class BlogServiceTest {
 
     @Test
     void testUpdate_Success(){
+        BlogPost oldPost = new BlogPost(
+                1,
+                "Creativity",
+                "That's the most important thing in our world!...",
+                new Category(1, "Creativity"),
+                List.of(new Tag(1, "Power"), new Tag(2, "Brain")),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        UpdatedPost toUpdatePost = new UpdatedPost(
+                "Creativity",
+                "I sad NO!",
+                "Creativity",
+                List.of("Wow", "Nice")
+        );
+        Mockito.when(blogRepository.find(1)).thenReturn(oldPost);
+        blogService.updatePost(1, toUpdatePost);
 
+        ArgumentCaptor<BlogPost> postCaptor = ArgumentCaptor.forClass(BlogPost.class);
+        Mockito.verify(blogRepository).save(postCaptor.capture());
+
+        BlogPost capturedPost = postCaptor.getValue();
+
+        Assertions.assertEquals(1, capturedPost.getId());
+        Assertions.assertEquals("Creativity", capturedPost.getTitle());
+        Assertions.assertEquals("I sad NO!", capturedPost.getContent());
+        Assertions.assertEquals(List.of(new Tag(0, "Wow"), new Tag(0,"Nice")), capturedPost.getTags());
+
+    }
+
+    @Test
+    void testUpdate_NoTitle(){
+        BlogPost oldPost = new BlogPost(
+                1,
+                "Creativity",
+                "That's the most important thing in our world!...",
+                new Category(1, "Creativity"),
+                List.of(new Tag(1, "Power"), new Tag(2, "Brain")),
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+        UpdatedPost toUpdatePost = new UpdatedPost(
+                "",
+                "I sad NO!",
+                "Creativity",
+                List.of("Wow", "Nice")
+        );
+        UpdatedPost toUpdatePost2 = new UpdatedPost(
+                null,
+                "I sad NO!",
+                "Creativity",
+                List.of("Wow", "Nice")
+        );
+        Assertions.assertThrows(IllegalArgumentException.class, () -> blogService.updatePost(1, toUpdatePost));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> blogService.updatePost(1, toUpdatePost2));
+    }
+
+    @Test
+    void testUpdate_NoElement(){
+        UpdatedPost toUpdatePost = new UpdatedPost(
+                "Title",
+                "I sad NO!",
+                "Creativity",
+                List.of("Wow", "Nice")
+        );
+        Mockito.when(blogRepository.find(1)).thenReturn(null);
+
+        Assertions.assertThrows(NoSuchElementException.class, () -> blogService.updatePost(1, toUpdatePost));
     }
 }
