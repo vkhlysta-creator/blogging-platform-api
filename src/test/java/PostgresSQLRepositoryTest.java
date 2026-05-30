@@ -91,7 +91,7 @@ public class PostgresSQLRepositoryTest {
                 connection.close();
             }
         } catch (SQLException e) {
-            System.out.println(e.getMessage());;
+            System.out.println(e.getMessage());
         }
     }
 
@@ -124,7 +124,7 @@ public class PostgresSQLRepositoryTest {
         try {
             repository.save(postCreated);
         } catch (IllegalArgumentException e) {
-            System.out.println("Exception");;
+            System.out.println("Exception");
         }
         List<BlogPost> posts = repository.findAll();
         Assertions.assertEquals(4, posts.size());
@@ -159,6 +159,11 @@ public class PostgresSQLRepositoryTest {
 
     @Test
     void  testWildSearch(){
-
+        PostgresSQLRepository repository = new PostgresSQLRepository(connection);
+        List<BlogPost> wildFound = repository.wildSearch("PostgreSQL");
+        Assertions.assertEquals(1, wildFound.getFirst().getId());
+        List<BlogPost> notExisted = repository.wildSearch("xxxxx");
+        Assertions.assertNotNull(notExisted);
+        Assertions.assertTrue(notExisted.isEmpty());
     }
 }
