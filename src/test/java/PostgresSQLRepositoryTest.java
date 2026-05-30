@@ -10,7 +10,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 public class PostgresSQLRepositoryTest {
     private static Connection connection;
@@ -140,7 +139,7 @@ public class PostgresSQLRepositoryTest {
     @Test
     void testDelete(){
         PostgresSQLRepository repository = new PostgresSQLRepository(connection);
-        BlogPost deletedPost = repository.delete(2);
+        repository.delete(2);
         BlogPost post = repository.find(2);
         Assertions.assertNull(post);
     }
@@ -158,12 +157,19 @@ public class PostgresSQLRepositoryTest {
     }
 
     @Test
-    void  testWildSearch(){
+    void testWildSearch_Success() {
         PostgresSQLRepository repository = new PostgresSQLRepository(connection);
         List<BlogPost> wildFound = repository.wildSearch("PostgreSQL");
         Assertions.assertEquals(1, wildFound.getFirst().getId());
-        List<BlogPost> notExisted = repository.wildSearch("xxxxx");
-        Assertions.assertNotNull(notExisted);
-        Assertions.assertTrue(notExisted.isEmpty());
+        Assertions.assertEquals(1, wildFound.size());
+        Assertions.assertEquals("Getting Started with PostgreSQL", wildFound.getFirst().getTitle());
+    }
+
+    @Test
+    void testWildSearch_NoResults() {
+        PostgresSQLRepository repository = new PostgresSQLRepository(connection);
+        List<BlogPost> wildFound = repository.wildSearch("Java-Enterprise");
+        Assertions.assertEquals(0,wildFound.size());
+
     }
 }
