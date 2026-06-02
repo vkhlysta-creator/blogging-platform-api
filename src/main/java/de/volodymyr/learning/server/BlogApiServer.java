@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class BlogApiServer {
     private HttpServer server;
@@ -52,12 +53,48 @@ public class BlogApiServer {
 
                 case "GET" -> {
                     String query = exchange.getRequestURI().getQuery();
-                    if (query != null){
+                    String path = exchange.getRequestURI().getPath();
+
+                    if (query != null && query.contains("query=")){
                         String[] querySplited = query.split("query=");
+
+                        if (querySplited.length > 1) {
+                            List<BlogPost> wildPosts = service.searchWild(querySplited[1]);
+                            sendConfirmation(exchange, mapper.writeValueAsString(wildPosts), 200);
+
+                        }else {
+                            sendConfirmation(exchange, "[]", 200);
+                        }
+                        return;
+
                     }
-                    List<BlogPost> allPosts =  service.getAllPosts();
-                    String json = mapper.writeValueAsString(allPosts);
-                    sendConfirmation(exchange, json, 200);
+
+                    String[] pathParts = path.split("/");
+
+
+                        if (pathParts.length >= 3 && "api".equals(pathParts[1]) && "posts".equals(pathParts[2])){
+
+                            if (pathParts.length == 3){
+                                List<BlogPost> allPosts =  service.getAllPosts();
+                                sendConfirmation(exchange, mapper.writeValueAsString(allPosts), 200);
+                                return;
+                            }
+
+                            if (pathParts.length == 4){
+                                try {
+                                    int parsedID = Integer.parseInt(pathParts[3]);
+                                    sendConfirmation(exchange, mapper.writeValueAsString(service.findById(parsedID)), 200);
+                                } catch (NumberFormatException e) {
+                                    System.out.println("Exception: " + e.getMessage());
+                                    sendConfirmation(exchange, "Bad Request: ID must be a number", 400);
+                                }catch (NoSuchElementException ne ){
+                                    sendConfirmation(exchange, "Not Found", 404);
+                                }
+                                return;
+                            }
+
+                    }
+                        sendConfirmation(exchange, "Not Found", 404);
                 }
 
                 case "POST" -> {
