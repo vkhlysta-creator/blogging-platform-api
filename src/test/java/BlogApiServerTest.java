@@ -145,15 +145,6 @@ public class BlogApiServerTest {
 
     @Test
     void testByID_Unsuccess() throws  IOException, InterruptedException{
-        BlogPost blogPost = new BlogPost(
-                1,
-                "Test",
-                "Short content...",
-                new Category(1, "Tech"),
-                List.of(new Tag(1, "java")),
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
         Mockito.when(service.findById(1)).thenThrow(NoSuchElementException.class);
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -191,5 +182,71 @@ public class BlogApiServerTest {
 
         Assertions.assertEquals(404, response.statusCode());
         Assertions.assertEquals("Not Found", response.body());
+    }
+
+    @Test
+    void testPUT_Success() throws IOException, InterruptedException{
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:8081/api/posts/1"))
+                .PUT(HttpRequest.BodyPublishers.ofString("{\"title\":\"UpdatedTest\",\"content\":\"Short content...\",\"category\":\"Tech\",\"tags\":[\"java\"]}"))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertEquals("Post updated", response.body());
+
+    }
+
+    @Test
+    void testPUT_Not_Found() throws IOException, InterruptedException{
+
+        Mockito.when(service.updatePost(Mockito.anyInt(), any())).thenThrow(NoSuchElementException.class);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:8081/api/posts/1"))
+                .PUT(HttpRequest.BodyPublishers.ofString("{\"title\":\"UpdatedTest\",\"content\":\"Short content...\",\"category\":\"Tech\",\"tags\":[\"java\"]}"))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        Assertions.assertEquals(404, response.statusCode());
+
+
+    }
+
+    @Test
+    void testDelete_Success() throws IOException, InterruptedException{
+
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:8081/api/posts/1"))
+                .DELETE()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertEquals("OK", response.body());
+
+
+    }
+
+    @Test
+    void testDelete_NotFound() throws IOException, InterruptedException{
+
+        Mockito.when(service.deletePost(Mockito.anyInt())).thenThrow(NoSuchElementException.class);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:8081/api/posts/1"))
+                .DELETE()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        Assertions.assertEquals(404, response.statusCode());
+        Assertions.assertEquals("Not Found", response.body());
+
+
     }
 }

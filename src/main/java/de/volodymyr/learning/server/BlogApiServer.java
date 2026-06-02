@@ -8,6 +8,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import de.volodymyr.learning.model.BlogPost;
 import de.volodymyr.learning.model.CreatedPost;
+import de.volodymyr.learning.model.UpdatedPost;
 import de.volodymyr.learning.service.BlogService;
 
 import java.io.IOException;
@@ -24,7 +25,7 @@ public class BlogApiServer {
             .registerModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATE_KEYS_AS_TIMESTAMPS);
 
-    public BlogApiServer(BlogService service){
+    public BlogApiServer(BlogService service) {
         this.service = service;
     }
 
@@ -39,7 +40,7 @@ public class BlogApiServer {
         }
     }
 
-    public void stop(){
+    public void stop() {
         server.stop(0);
 
 
@@ -47,22 +48,22 @@ public class BlogApiServer {
 
     private class PostHandler implements HttpHandler {
         @Override
-        public void handle (HttpExchange exchange) throws IOException{
+        public void handle(HttpExchange exchange) throws IOException {
             String method = exchange.getRequestMethod();
-            switch (method){
+            switch (method) {
 
                 case "GET" -> {
                     String query = exchange.getRequestURI().getQuery();
                     String path = exchange.getRequestURI().getPath();
 
-                    if (query != null && query.contains("query=")){
+                    if (query != null && query.contains("query=")) {
                         String[] querySplited = query.split("query=");
 
                         if (querySplited.length > 1) {
                             List<BlogPost> wildPosts = service.searchWild(querySplited[1]);
                             sendConfirmation(exchange, mapper.writeValueAsString(wildPosts), 200);
 
-                        }else {
+                        } else {
                             sendConfirmation(exchange, "[]", 200);
                         }
                         return;
@@ -72,29 +73,29 @@ public class BlogApiServer {
                     String[] pathParts = path.split("/");
 
 
-                        if (pathParts.length >= 3 && "api".equals(pathParts[1]) && "posts".equals(pathParts[2])){
+                    if (pathParts.length >= 3 && "api".equals(pathParts[1]) && "posts".equals(pathParts[2])) {
 
-                            if (pathParts.length == 3){
-                                List<BlogPost> allPosts =  service.getAllPosts();
-                                sendConfirmation(exchange, mapper.writeValueAsString(allPosts), 200);
-                                return;
-                            }
+                        if (pathParts.length == 3) {
+                            List<BlogPost> allPosts = service.getAllPosts();
+                            sendConfirmation(exchange, mapper.writeValueAsString(allPosts), 200);
+                            return;
+                        }
 
-                            if (pathParts.length == 4){
-                                try {
-                                    int parsedID = Integer.parseInt(pathParts[3]);
-                                    sendConfirmation(exchange, mapper.writeValueAsString(service.findById(parsedID)), 200);
-                                } catch (NumberFormatException e) {
-                                    System.out.println("Exception: " + e.getMessage());
-                                    sendConfirmation(exchange, "Bad Request: ID must be a number", 400);
-                                }catch (NoSuchElementException ne ){
-                                    sendConfirmation(exchange, "Not Found", 404);
-                                }
-                                return;
+                        if (pathParts.length == 4) {
+                            try {
+                                int parsedID = Integer.parseInt(pathParts[3]);
+                                sendConfirmation(exchange, mapper.writeValueAsString(service.findById(parsedID)), 200);
+                            } catch (NumberFormatException e) {
+                                System.out.println("Exception: " + e.getMessage());
+                                sendConfirmation(exchange, "Bad Request: ID must be a number", 400);
+                            } catch (NoSuchElementException ne) {
+                                sendConfirmation(exchange, "Not Found", 404);
                             }
+                            return;
+                        }
 
                     }
-                        sendConfirmation(exchange, "Not Found", 404);
+                    sendConfirmation(exchange, "Not Found", 404);
                 }
 
                 case "POST" -> {
@@ -105,9 +106,54 @@ public class BlogApiServer {
                     sendConfirmation(exchange, mapper.writeValueAsString(savedPost), 201);
                 }
 
-                case "PUT" -> sendConfirmation(exchange, "200 PUT", 200);
+                case "PUT" -> {
+                    String path = exchange.getRequestURI().getPath();
+                    String[] pathParts = path.split("/");
+                    if (pathParts.length == 4) {
+                        try {
+                            int id = Integer.parseInt(pathParts[3]);
+                            byte[] bytes = exchange.getRequestBody().readAllBytes();
+                            String body = new String(bytes, StandardCharsets.UTF_8);
+                            UpdatedPost dto = mapper.readValue(body, UpdatedPost.class);
+                            try {
+                                service.updatePost(id, dto);
+                                sendConfirmation(exchange, "Post updated", 200);
+                            } catch (NoSuchElementException e) {
+                                sendConfirmation(exchange, "Not Found", 404);
+                            } catch (IllegalArgumentException e) {
+                                sendConfirmation(exchange, "Bad Request: Titel must be present", 400);
+                            }
 
-                case "DELETE" -> sendConfirmation(exchange, "200 DELETE", 200);
+                        } catch (NumberFormatException e) {
+                            sendConfirmation(exchange, "Bad Request: ID must be a number", 400);
+                        }
+                    } else
+                        sendConfirmation(exchange, "Not Found", 404);
+                }
+
+                case "DELETE" -> {
+                    String path = exchange.getRequestURI().getPath();
+                    String[] pathParts = path.split("/");
+                    if (pathParts.length == 4) {
+
+                        try {
+                            int id = Integer.parseInt(pathParts[3]);
+                            try {
+                                service.deletePost(id);
+                                sendConfirmation(exchange, "OK", 200);
+
+                            } catch (NoSuchElementException ne) {
+                                sendConfirmation(exchange, "Not Found", 404);
+                            }
+                        } catch (NumberFormatException e) {
+
+                            sendConfirmation(exchange, "Bad Request: ID must be a number", 400);
+
+                        }
+                    } else
+                        sendConfirmation(exchange, "Not Found", 404);
+
+                }
 
                 default -> sendConfirmation(exchange, "405 Method not allowed here! ", 405);
 
@@ -118,7 +164,7 @@ public class BlogApiServer {
         private static void sendConfirmation(HttpExchange exchange, String output, int statusCode) throws IOException {
             exchange.sendResponseHeaders(statusCode, output.getBytes().length);
 
-            try (OutputStream os = exchange.getResponseBody()){
+            try (OutputStream os = exchange.getResponseBody()) {
                 os.write(output.getBytes());
             }
         }
