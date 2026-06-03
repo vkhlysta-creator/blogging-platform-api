@@ -29,14 +29,7 @@ The application strictly follows the **Separation of Concerns** principle and is
 ## Database Schema
 
 The application uses **PostgreSQL** as its relational database management system. The schema consists of four tables managing posts, categories, and tags with proper foreign key constraints and cascading deletes.
-
-### Entity-Relationship Diagram (ERD)
-
-```text
-  [categories] 1 ──── 0..* [posts] 0..* ──── 0..* [tags]
-                             │                      │
-                             └────► [post_tags] ◄───┘
-
+```text 
 CREATE TABLE categories (
     id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
@@ -61,6 +54,17 @@ CREATE TABLE post_tags (
     tag_id bigint REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, tag_id)
 );
+```
+
+### Entity-Relationship Diagram (ERD)
+
+```text
+  [categories] 1 ──── 0..* [posts] 0..* ──── 0..* [tags]
+                             │                      │
+                             └────► [post_tags] ◄───┘
+
+
+```
 
 
 ## How to Run
