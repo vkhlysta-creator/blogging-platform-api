@@ -77,4 +77,4 @@ CREATE TABLE post_tags (
 3. Build and run the application via your IDE or terminal:
    ```bash
    ./gradlew build
-java -jar build/libs/your-app-name.jar
+   java -jar build/libs/your-app-name.jar
