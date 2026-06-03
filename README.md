@@ -26,35 +26,46 @@ The application strictly follows the **Separation of Concerns** principle and is
 | `POST` | `/api/posts` | Create a new blog post |
 | `PUT` | `/api/posts/{id}` | Update an existing post |
 | `DELETE` | `/api/posts/{id}` | Delete a post by ID |
+## Database Schema
 
-## How to Run
+The application uses **PostgreSQL** as its relational database management system. The schema consists of four tables managing posts, categories, and tags with proper foreign key constraints and cascading deletes.
 
-1. Make sure you have **PostgreSQL** running locally and a database created.
-DATABASE Schema: 
-CREATE TABLE categories(
-    id  bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+### Entity-Relationship Diagram (ERD)
+
+```text
+  [categories] 1 ──── 0..* [posts] 0..* ──── 0..* [tags]
+                             │                      │
+                             └────► [post_tags] ◄───┘
+
+CREATE TABLE categories (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE posts(
-    id  bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+CREATE TABLE posts (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     title TEXT NOT NULL,
     content TEXT,
-    created_at timestamptz NOT NULL ,
-    updated_at timestamptz NOT NULL ,
+    created_at timestamptz NOT NULL,
+    updated_at timestamptz NOT NULL,
     category_id bigint REFERENCES categories(id)
 );
 
-CREATE TABLE tags(
-    id  bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+CREATE TABLE tags (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE post_tags(
+CREATE TABLE post_tags (
     post_id bigint REFERENCES posts(id) ON DELETE CASCADE,
     tag_id bigint REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, tag_id)
 );
+
+
+## How to Run
+
+1. Make sure you have **PostgreSQL** running locally and a database created.
 2. Set up the required environment variables:
    - `DB_PASSWORD` (Required: your database password)
    - `DB_URL` (Optional: defaults to `jdbc:postgresql://localhost:5432/blog_db`)
