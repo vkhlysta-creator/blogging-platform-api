@@ -26,7 +26,8 @@ public class BlogPost {
     public int getId() {
         return id;
     }
-    public String getTitle(){
+
+    public String getTitle() {
         return title;
     }
 

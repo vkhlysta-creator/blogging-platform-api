@@ -1,93 +1,53 @@
 package de.volodymyr.learning;
 
 
-import de.volodymyr.learning.model.BlogPost;
-import de.volodymyr.learning.model.CreatedPost;
-import de.volodymyr.learning.model.UpdatedPost;
-import de.volodymyr.learning.repository.InMemoryBlogRepository;
+import de.volodymyr.learning.repository.PostgresSQLRepository;
+import de.volodymyr.learning.server.BlogApiServer;
 import de.volodymyr.learning.service.BlogService;
 
-import java.util.List;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class Main {
     public static void main(String[] args) {
-        BlogService service = getBlogService();
-        service.getAllPosts().forEach(post -> System.out.println(
-                "------------------------- Post ------------------------\n" +
-                "ID:" + post.getId() + "\n" +
-                        "Title: " + post.getTitle() + "\n" +
-                        "Content: " + post.getContent() + "\n" +
-                        "Category: " + post.getCategory().name() + "\n" +
-                        "CreatedAt: " + post.getCreatedAt() + "\n" +
-                        "UpdatedAt: " + post.getUpdatedAt() + "\n" +
-                        "Tags: " + post.getTags())
-                );
+        String dbUrl = getEnvOrDefault("DB_URL", "jdbc:postgresql://localhost:5432/blog_db");
+        String dbUser = getEnvOrDefault("DB_USER", "postgres");
+        String dbPassword = System.getenv("DB_PASSWORD");
+        final Connection connection;
+        try {
+            connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
 
-        service.updatePost(2, new UpdatedPost(
-                "Second universal Post",
-                "This post was changed and updated",
-                "Death",
-                List.of("AI", "Programming")
-                ));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                System.out.println("Shutting down application...");
+                try {
+                    if (connection != null && !connection.isClosed()) {
+                        connection.close();
+                        System.out.println("Database connection closed.");
+                    }
+                } catch (SQLException e) {
+                    System.out.println("Error closing database connection: " + e.getMessage());
+                }
+            }));
 
-        service.getAllPosts().forEach(post -> System.out.println(
-                "------------------------- Post ------------------------\n" +
-                        "ID:" + post.getId() + "\n" +
-                        "Title: " + post.getTitle() + "\n" +
-                        "Content: " + post.getContent() + "\n" +
-                        "Category: " + post.getCategory().name() + "\n" +
-                        "CreatedAt: " + post.getCreatedAt() + "\n" +
-                        "UpdatedAt: " + post.getUpdatedAt() + "\n" +
-                        "Tags: " + post.getTags()
-                ));
+            PostgresSQLRepository repository = new PostgresSQLRepository(connection);
+            BlogService service = new BlogService(repository);
+            BlogApiServer server = new BlogApiServer(service);
 
-        List<BlogPost> postWild = service.searchWild("Death");
 
-        postWild.forEach(blogPost -> System.out.println(
-                "---------------------- WILD CARDS SEARCH --------------\n" +
-                "------------------------- Post ------------------------\n" +
-                        "ID:" + blogPost.getId() + "\n" +
-                        "Title: " + blogPost.getTitle() + "\n" +
-                        "Content: " + blogPost.getContent() + "\n" +
-                        "Category: " + blogPost.getCategory().name() + "\n" +
-                        "CreatedAt: " + blogPost.getCreatedAt() + "\n" +
-                        "UpdatedAt: " + blogPost.getUpdatedAt() + "\n" +
-                        "Tags: " + blogPost.getTags()
-        ));
+            server.start(8080);
+            System.out.println("Server is running on http://localhost:8080");
 
-        service.deletePost(2);
 
-        service.getAllPosts().forEach(post -> System.out.println(
-                "------------------------- Post ------------------------\n" +
-                        "ID:" + post.getId() + "\n" +
-                        "Title: " + post.getTitle() + "\n" +
-                        "Content: " + post.getContent() + "\n" +
-                        "Category: " + post.getCategory().name() + "\n" +
-                        "CreatedAt: " + post.getCreatedAt() + "\n" +
-                        "UpdatedAt: " + post.getUpdatedAt() + "\n" +
-                        "Tags: " + post.getTags()
-        ));
-
+        } catch (SQLException | IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
 
     }
 
-    private static BlogService getBlogService() {
-        InMemoryBlogRepository repository = new InMemoryBlogRepository();
-        BlogService service = new BlogService(repository);
-        service.create(new CreatedPost(
-                "First universal Post",
-                "lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum ",
-                "Programming",
-                List.of("HR", "Programming", "AI")
-        ));
-        service.create(new CreatedPost(
-                "Second universal Post",
-                "lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum ",
-                "Life",
-                List.of("Work-Life", "Programming", "AI")
-        ));
-        return service;
+    private static String getEnvOrDefault(String name, String defaultValue) {
+        String value = System.getenv(name);
+        return (value != null && !value.isEmpty()) ? value : defaultValue;
     }
-
 }
-

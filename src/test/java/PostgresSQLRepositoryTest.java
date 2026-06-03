@@ -15,7 +15,7 @@ public class PostgresSQLRepositoryTest {
     private static Connection connection;
 
     @BeforeAll
-    static void openConnection(){
+    static void openConnection() {
         try {
             connection = DriverManager.getConnection("jdbc:postgresql://localhost/blog_platform_test", "my_user", "my_password");
         } catch (SQLException e) {
@@ -25,7 +25,7 @@ public class PostgresSQLRepositoryTest {
     }
 
     @BeforeEach
-    void clearTablesAndInsert(){
+    void clearTablesAndInsert() {
         String truncateQuery = """
                 TRUNCATE TABLE posts, categories, tags, post_tags RESTART IDENTITY CASCADE;
                 """;
@@ -71,22 +71,22 @@ public class PostgresSQLRepositoryTest {
                 PreparedStatement psTags = connection.prepareStatement(insertQueryTags);
                 PreparedStatement psPostTags = connection.prepareStatement(insertQueryLinks);
                 PreparedStatement psCategories = connection.prepareStatement(insertCategories)
-        ){
+        ) {
             psTruncate.executeUpdate();
             psCategories.executeUpdate();
             psPost.executeUpdate();
             psTags.executeUpdate();
             psPostTags.executeUpdate();
-        }catch (SQLException sqle){
+        } catch (SQLException sqle) {
             System.out.println("Exception: " + sqle.getMessage());
         }
 
     }
 
     @AfterAll
-    static void closeConnection(){
+    static void closeConnection() {
         try {
-            if (connection != null){
+            if (connection != null) {
                 connection.close();
             }
         } catch (SQLException e) {
@@ -95,17 +95,17 @@ public class PostgresSQLRepositoryTest {
     }
 
     @Test
-    void testFindByID(){
+    void testFindByID() {
         PostgresSQLRepository repository = new PostgresSQLRepository(connection);
         BlogPost blogPost = repository.find(1);
         Assertions.assertNotNull(blogPost);
-        Assertions.assertEquals(1 ,blogPost.getId());
+        Assertions.assertEquals(1, blogPost.getId());
         Assertions.assertEquals("Getting Started with PostgreSQL", blogPost.getTitle());
         Assertions.assertEquals(3, blogPost.getTags().size());
     }
 
     @Test
-    void testFindALl(){
+    void testFindALl() {
         PostgresSQLRepository repository = new PostgresSQLRepository(connection);
         List<BlogPost> postList = repository.findAll();
         Assertions.assertNotNull(postList);
@@ -117,9 +117,9 @@ public class PostgresSQLRepositoryTest {
     }
 
     @Test
-    void testSave(){
+    void testSave() {
         PostgresSQLRepository repository = new PostgresSQLRepository(connection);
-        BlogPost postCreated = new BlogPost(0, "Great test", "I love testing", new Category(1, "Technology" ), List.of(new Tag(1, "beginner"), new Tag(3,"tutorial" )), LocalDateTime.now(), LocalDateTime.now());
+        BlogPost postCreated = new BlogPost(0, "Great test", "I love testing", new Category(1, "Technology"), List.of(new Tag(1, "beginner"), new Tag(3, "tutorial")), LocalDateTime.now(), LocalDateTime.now());
         try {
             repository.save(postCreated);
         } catch (IllegalArgumentException e) {
@@ -137,7 +137,7 @@ public class PostgresSQLRepositoryTest {
     }
 
     @Test
-    void testDelete(){
+    void testDelete() {
         PostgresSQLRepository repository = new PostgresSQLRepository(connection);
         repository.delete(2);
         BlogPost post = repository.find(2);
@@ -145,7 +145,7 @@ public class PostgresSQLRepositoryTest {
     }
 
     @Test
-    void testUpdate(){
+    void testUpdate() {
         PostgresSQLRepository repository = new PostgresSQLRepository(connection);
         BlogPost toUpdatePost = repository.find(1);
 
@@ -169,7 +169,7 @@ public class PostgresSQLRepositoryTest {
     void testWildSearch_NoResults() {
         PostgresSQLRepository repository = new PostgresSQLRepository(connection);
         List<BlogPost> wildFound = repository.wildSearch("Java-Enterprise");
-        Assertions.assertEquals(0,wildFound.size());
+        Assertions.assertEquals(0, wildFound.size());
 
     }
 }

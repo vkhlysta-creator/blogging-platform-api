@@ -29,15 +29,13 @@ public class BlogApiServer {
         this.service = service;
     }
 
-    public void start(int port) {
-        try {
-            this.server = HttpServer.create(new InetSocketAddress(port), 0);
-            server.createContext("/api/posts", new PostHandler());
-            server.setExecutor(null);
-            server.start();
-        } catch (IOException e) {
-            System.out.println("Exception creation of the Server: " + e.getMessage());
-        }
+    public void start(int port) throws IOException {
+
+        this.server = HttpServer.create(new InetSocketAddress(port), 0);
+        server.createContext("/api/posts", new PostHandler());
+        server.setExecutor(null);
+        server.start();
+
     }
 
     public void stop() {

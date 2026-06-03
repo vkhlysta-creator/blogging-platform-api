@@ -27,19 +27,21 @@ public class BlogApiServerTest {
 
     private BlogApiServer server;
     private final HttpClient client = HttpClient.newHttpClient();
+
     @BeforeEach
-    void openServer(){
+    void openServer() throws IOException {
         server = new BlogApiServer(service);
         server.start(8081);
     }
+
     @AfterEach
-    void closeServer(){
+    void closeServer() {
         server.stop();
     }
 
 
     @Test
-    void test_createPost_success() throws IOException, InterruptedException{
+    void test_createPost_success() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8081/api/posts"))
                 .POST(HttpRequest.BodyPublishers.ofString("{\"title\":\"Test\",\"content\":\"Short content...\",\"category\":\"Tech\",\"tags\":[\"java\"]}"))
@@ -60,7 +62,7 @@ public class BlogApiServerTest {
     }
 
     @Test
-    void test_GET_Success() throws  IOException, InterruptedException{
+    void test_GET_Success() throws IOException, InterruptedException {
         List<BlogPost> listPosts = List.of(
                 new BlogPost(
                         1,
@@ -91,12 +93,12 @@ public class BlogApiServerTest {
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         Assertions.assertEquals(200, response.statusCode());
-        Assertions.assertNotNull( response.body());
+        Assertions.assertNotNull(response.body());
 
     }
 
     @Test
-    void test_GET_Wild() throws  IOException, InterruptedException{
+    void test_GET_Wild() throws IOException, InterruptedException {
         BlogPost blogPost = new BlogPost(
                 1,
                 "Test",
@@ -119,7 +121,7 @@ public class BlogApiServerTest {
     }
 
     @Test
-    void test_ByID_Success() throws  IOException, InterruptedException{
+    void test_ByID_Success() throws IOException, InterruptedException {
         BlogPost blogPost = new BlogPost(
                 1,
                 "Test",
@@ -144,7 +146,7 @@ public class BlogApiServerTest {
 
 
     @Test
-    void testByID_Unsuccess() throws  IOException, InterruptedException{
+    void testByID_Unsuccess() throws IOException, InterruptedException {
         Mockito.when(service.findById(1)).thenThrow(NoSuchElementException.class);
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -159,7 +161,7 @@ public class BlogApiServerTest {
     }
 
     @Test
-    void testInvalidID() throws IOException, InterruptedException{
+    void testInvalidID() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8081/api/posts/not-a-number"))
                 .GET()
@@ -172,7 +174,7 @@ public class BlogApiServerTest {
     }
 
     @Test
-    void testUnknownID() throws IOException, InterruptedException{
+    void testUnknownID() throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8081/api/posts/1/subpath"))
                 .GET()
@@ -185,7 +187,7 @@ public class BlogApiServerTest {
     }
 
     @Test
-    void testPUT_Success() throws IOException, InterruptedException{
+    void testPUT_Success() throws IOException, InterruptedException {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:8081/api/posts/1"))
@@ -200,7 +202,7 @@ public class BlogApiServerTest {
     }
 
     @Test
-    void testPUT_Not_Found() throws IOException, InterruptedException{
+    void testPUT_Not_Found() throws IOException, InterruptedException {
 
         Mockito.when(service.updatePost(Mockito.anyInt(), any())).thenThrow(NoSuchElementException.class);
 
@@ -217,7 +219,7 @@ public class BlogApiServerTest {
     }
 
     @Test
-    void testDelete_Success() throws IOException, InterruptedException{
+    void testDelete_Success() throws IOException, InterruptedException {
 
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -234,7 +236,7 @@ public class BlogApiServerTest {
     }
 
     @Test
-    void testDelete_NotFound() throws IOException, InterruptedException{
+    void testDelete_NotFound() throws IOException, InterruptedException {
 
         Mockito.when(service.deletePost(Mockito.anyInt())).thenThrow(NoSuchElementException.class);
         HttpRequest request = HttpRequest.newBuilder()
