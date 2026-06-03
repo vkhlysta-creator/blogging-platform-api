@@ -30,11 +30,36 @@ The application strictly follows the **Separation of Concerns** principle and is
 ## How to Run
 
 1. Make sure you have **PostgreSQL** running locally and a database created.
+DATABASE Schema: 
+CREATE TABLE categories(
+    id  bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE posts(
+    id  bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+    title TEXT NOT NULL,
+    content TEXT,
+    created_at timestamptz NOT NULL ,
+    updated_at timestamptz NOT NULL ,
+    category_id bigint REFERENCES categories(id)
+);
+
+CREATE TABLE tags(
+    id  bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY ,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE post_tags(
+    post_id bigint REFERENCES posts(id) ON DELETE CASCADE,
+    tag_id bigint REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (post_id, tag_id)
+);
 2. Set up the required environment variables:
    - `DB_PASSWORD` (Required: your database password)
    - `DB_URL` (Optional: defaults to `jdbc:postgresql://localhost:5432/blog_db`)
    - `DB_USER` (Optional: defaults to `postgres`)
 3. Build and run the application via your IDE or terminal:
    ```bash
-   mvn clean package
-   java -jar target/your-app-name.jar
+   ./gradlew build
+java -jar build/libs/your-app-name.jar
